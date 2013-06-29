@@ -36,7 +36,7 @@ class GrantTypes extends Migration {
     $this->description = t('Import grant types from CSV.');
     $this->map = new MigrateSQLMap($this->machineName,
       array(
-        "TYPE" => array(
+        "type" => array(
           'type' => 'varchar',
           'length' => '255',
           'not null' => TRUE,
@@ -45,10 +45,15 @@ class GrantTypes extends Migration {
       ),
       MigrateDestinationTerm::getKeySchema()
     );
-    $this->source = new MigrateSourceCSV('sites/default/files/csvs/classify_grants.csv', array(), array('header_rows'=>4,'embedded_newlines'=>FALSE));
+    $this->source = new MigrateSourceCSV('/home/bc/Desktop/codez/gnl/gnl_demo/sites/default/files/csvs/classify_grants.csv', $this->csvcols(), array('header_rows'=>4,'embedded_newlines'=>FALSE));
     $this->destination = new MigrateDestinationTerm('grant_types');
-    $this->addFieldMapping('name', 'TYPE');
-    $this->addFieldMapping('description', 'DESCRIPTION');
+    $this->addFieldMapping('name', 'type');
+    $this->addFieldMapping('description', 'description');
+  }
+  protected function csvcols() {
+    $cols[0] = array('type', 'grant type');
+    $cols[1] = array('description', 'description');
+    return $cols;
   }
 }
 
@@ -58,7 +63,7 @@ class OrgNTEETypes extends Migration {
     $this->description = t('Import organization NTEE codes and descriptions from CSV into term name and ntee code fields.');
     $this->map = new MigrateSQLMap($this->machineName,
       array(
-        "CODE" => array(
+        "code" => array(
           'type' => 'varchar',
           'length' => '8',
           'not null' => TRUE,
@@ -67,10 +72,15 @@ class OrgNTEETypes extends Migration {
       ),
       MigrateDestinationTerm::getKeySchema()
     );
-    $this->source = new MigrateSourceCSV('sites/default/files/csvs/classify_nonprofits_detail.csv', array(), array('header_rows'=>4,'embedded_newlines'=>FALSE));
+    $this->source = new MigrateSourceCSV('/home/bc/Desktop/codez/gnl/gnl_demo/sites/default/files/csvs/classify_nonprofits_detail.csv', $this->csvcols(), array('header_rows'=>4,'embedded_newlines'=>FALSE));
     $this->destination = new MigrateDestinationTerm('ntee');
-    $this->addFieldMapping('name', 'DESCRIPTION');
-    $this->addFieldMapping('field_ntee_code', 'CODE');
+    $this->addFieldMapping('name', 'description');
+    $this->addFieldMapping('field_ntee_code', 'code');
+  }
+  protected function csvcols() {
+    $cols[0] = array('code', 'ntee code');
+    $cols[1] = array('description', 'description');
+    return $cols;
   }
 }
 
