@@ -1,0 +1,9 @@
+name = "migrate_gnl"
+description = "Imports detroit ledger taxonomy data"
+core = "7.x"
+dependencies[] = "gnl_schema"
+dependencies[] = "migrate"
+package = "Migration"
+
+files[] = "migrate_gnl.module"
+files[] = "migrate_gnl.migrate.inc"
