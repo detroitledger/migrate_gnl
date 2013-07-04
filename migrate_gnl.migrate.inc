@@ -32,6 +32,10 @@ function migrate_gnl_migrate_api() {
         'class_name' => 'Orgs',
         'group_name' => 'nodes',
       ),
+      'Grants' => array(
+        'class_name' => 'Grants',
+        'group_name' => 'nodes',
+      ),
     ),
   );
   return $api;
@@ -106,13 +110,18 @@ class Orgs extends Migration {
       ),
       MigrateDestinationNode::getKeySchema()
     );
-    $this->source = new MigrateSourceCSV('/data/disk/gnl/csvs/orgs_masterlist_NTEE.csv', $this->csvcols(), array('header_rows'=>1, 'embedded_newlines'=>FALSE));
+    $this->source = new MigrateSourceCSV('/Users/matth/csvs/csvs/orgs_masterlist_NTEE.csv', $this->csvcols(), array('header_rows'=>1, 'embedded_newlines'=>FALSE));
     $this->destination = new MigrateDestinationNode('org');
     $this->addFieldMapping('title', 'ORGANIZATION_NAME');
     $this->addFieldMapping(NULL, 'ORG_NTEE'); // used by prepareRow()
-    $this->addFieldMapping('field_ntee', 'ntees')
-         ->arguments(array('source_type' => 'tid'))
+    //$this->addFieldMapping('field_ntee', 'ntees')
+    //     ->arguments(array('source_type' => 'tid'))
+    //     ->separator(',');
+    $this->addFieldMapping('field_ntee', 'ntees');
+    $this->addFieldMapping('field_ntee:source_type', 'tid')
          ->separator(',');
+
+
   }
   protected function csvcols() {
     $columns[1] = array('ORGANIZATION_NAME', 'org name');
@@ -139,3 +148,116 @@ class Orgs extends Migration {
   }
 }
 
+
+class Grants extends Migration {
+
+  public function __construct($arguments) {
+    parent::__construct($arguments);
+    $this->description = t('Import grants from a CSV');
+
+    // Set up the source
+    $this->source = new MigrateSourceCSV('/Users/matth/csvs/csvs/orgs_masterlist_NTEE.csv', $this->csvcols(), array('header_rows'=>1, 'embedded_newlines'=>FALSE));
+
+    // Set up grants as the destination
+    $this->destination = new MigrateDestinationNode('grant');
+
+    // Map fields in the source to the destination.
+    // This defines the key fields for the source and the destination.
+    // The first parameter names the map.
+    $this->map = new MigrateSQLMap($this->machineName,
+      array(
+        "ID" => array(
+          'type' => 'int',
+          'not null' => TRUE,
+          'description' => 'fake grant id',
+        )
+      ),
+      MigrateDestinationNode::getKeySchema()
+    );
+
+    // destination field is the first parameter
+    // and the source field is the second parameter
+    $this->addFieldMapping('title', 'ID'); // should be auto generated...
+    $this->addFieldMapping(NULL, 'Granter'); // used by prepareRow()
+    $this->addFieldMapping(NULL, 'Grantee'); // used by prepareRow()
+    $this->addFieldMapping(NULL, 'Amount'); // used by prepareRow()
+    $this->addFieldMapping(NULL, 'Year'); // used by prepareRow()
+    $this->addFieldMapping('field_source', 'Data_source');
+
+
+    // $this->addFieldMapping('field_ntee', 'ntees');
+        // ->arguments(array('source_type' => 'nid'));
+
+   $this->addFieldMapping('field_funder', 'Granter_id');
+   $this->addFieldMapping('field_recipient', 'Grantee_id');
+   $this->addFieldMapping('field_amount', 'Amount_clean');
+   $this->addFieldMapping('field_year', 'Year_clean');  // TODO - start and end
+
+
+  }
+
+  /**
+   * Fields:
+   *
+   * 0 ID
+   * 1 Granter,
+   * 2 Granter_program,
+   * 3 Grantee,
+   * 4 Grantee_city,
+   * 5 grantee_state,
+   * 6 impact_area,
+   * 7 impact_neighborhood,A
+   * 8 Amount,
+   * 9 Year,
+   * 10 Length (Years),
+   * 11 Data_source,
+   * 12 Notes
+   */
+
+  // Map columns in the CSV
+  protected function csvcols() {
+    $columns[0] = array('ID', 'ID');
+    $columns[1] = array('Granter', 'Granter');
+    $columns[3] = array('Grantee', 'Grantee');
+    $columns[8] = array('Amount', 'Amount');
+    $columns[9] = array('Year', 'Year');
+    $columns[10] = array('Length (Years)', 'Length');
+    $columns[11] = array('Data_source', 'Data_source');
+  }
+
+  public function findNodeId($orgName) {
+    $node = db_select('node', 'n')
+              ->fields('n')
+              ->condition('title', $orgName, '=')
+              ->execute()
+              ->fetch();
+    $nid = $node -> nid;
+    return $nid;
+  }
+
+  public function prepareRow($row) {
+
+    // Get the start year
+    $year = $row->Year;
+    $yearNum = intval($year);
+
+    // Get the end year
+    $length = $row->Length;
+    $lengthNum = intval($length);
+    $end = $yearNum + $lengthNum;
+
+    // Set up the date range
+    $date_range = array(
+      'from' => $year,
+      'to' => $end,
+    );
+    $row->Year_clean = array();
+    $row->Year_clean = drupal_json_encode($date_range);
+
+    // Get the organziation's IDs
+    $row->Granter_id = findNodeId($row->Granter);
+    $row->Grantee_id = findNodeId($row->Grantee);
+  }
+
+
+}
