@@ -45,7 +45,7 @@ class GrantTypes extends Migration {
       ),
       MigrateDestinationTerm::getKeySchema()
     );
-    $this->source = new MigrateSourceCSV('/home/bc/Desktop/codez/gnl/gnl_demo/sites/default/files/csvs/classify_grants.csv', $this->csvcols(), array('header_rows'=>4,'embedded_newlines'=>FALSE));
+    $this->source = new MigrateSourceCSV('/Users/matth/csvs/csvs/classify_grants.csv', $this->csvcols(), array('header_rows'=>4,'embedded_newlines'=>FALSE));
     $this->destination = new MigrateDestinationTerm('grant_types');
     $this->addFieldMapping('name', 'type');
     $this->addFieldMapping('description', 'description');
@@ -72,7 +72,7 @@ class OrgNTEETypes extends Migration {
       ),
       MigrateDestinationTerm::getKeySchema()
     );
-    $this->source = new MigrateSourceCSV('/home/bc/Desktop/codez/gnl/gnl_demo/sites/default/files/csvs/classify_nonprofits_detail.csv', $this->csvcols(), array('header_rows'=>4,'embedded_newlines'=>FALSE));
+    $this->source = new MigrateSourceCSV('/Users/matth/csvs/csvs/classify_nonprofits_detail.csv', $this->csvcols(), array('header_rows'=>4,'embedded_newlines'=>FALSE));
     $this->destination = new MigrateDestinationTerm('ntee');
     $this->addFieldMapping('name', 'description');
     $this->addFieldMapping('field_ntee_code', 'code');

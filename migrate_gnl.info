@@ -7,3 +7,10 @@ package = "Migration"
 
 files[] = "migrate_gnl.module"
 files[] = "migrate_gnl.migrate.inc"
+
+
+; Information added by drush on 2013-07-01
+version = ""
+project = "migrate_gnl"
+datestamp = "1372723607"
+
