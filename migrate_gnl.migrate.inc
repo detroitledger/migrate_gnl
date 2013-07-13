@@ -195,8 +195,6 @@ class Grants extends Migration {
    $this->addFieldMapping('field_recipient', 'grantee_id');
    $this->addFieldMapping('field_amount', 'amount_clean');
    $this->addFieldMapping('field_year', 'year_clean');  // TODO - start and end
-
-   print "fuuuu";
   }
 
   /**
@@ -220,12 +218,12 @@ class Grants extends Migration {
   // Map columns in the CSV
   protected function csvcols() {
     $cols[0] = array('ID', 'ID');
-    $cols[1] = array('Granter', 'Granter');
-    $cols[3] = array('Grantee', 'Grantee');
-    $cols[8] = array('Amount', 'Amount');
-    $cols[9] = array('Year', 'Year');
-    $cols[10] = array('Length_years)', 'Length');
-    $cols[11] = array('Data_source', 'Data_source');
+    $cols[1] = array('grantee', 'grantee');
+    $cols[3] = array('granter', 'granter');
+    $cols[8] = array('amount', 'amount');
+    $cols[9] = array('year', 'year');
+    $cols[10] = array('length_years', 'length_years');
+    $cols[11] = array('data_source', 'data_source');
     return $cols;
   }
 
@@ -242,11 +240,11 @@ class Grants extends Migration {
   public function prepareRow($row) {
 
     // Get the start year
-    $year = $row->Year;
+    $year = $row->year;
     $yearNum = intval($year);
 
     // Get the end year
-    $length = $row->Length;
+    $length = $row->length_years;
     $lengthNum = intval($length);
     $end = $yearNum + $lengthNum;
 
@@ -255,12 +253,12 @@ class Grants extends Migration {
       'from' => $year,
       'to' => $end,
     );
-    $row->Year_clean = array();
-    $row->Year_clean = drupal_json_encode($date_range);
+    $row->year_clean = array();
+    $row->year_clean = drupal_json_encode($date_range);
 
     // Get the organziation's IDs
-    $row->Granter_id = findNodeId($row->Granter);
-    $row->Grantee_id = findNodeId($row->Grantee);
+    $row->granter_id = findNodeId($row->granter);
+    $row->grantee_id = findNodeId($row->grantee);
   }
 
 
