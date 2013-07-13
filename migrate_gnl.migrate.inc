@@ -124,8 +124,9 @@ class Orgs extends Migration {
 
   }
   protected function csvcols() {
-    $columns[1] = array('ORGANIZATION_NAME', 'org name');
-    $columns[2] = array('ORG_NTEE', 'org ntees');
+    $cols[1] = array('ORGANIZATION_NAME', 'org name');
+    $cols[2] = array('ORG_NTEE', 'org ntees');
+    return $cols;
   }
   public function prepareRow($row) {
     $codes = explode(';', $row->ORG_NTEE);
@@ -156,10 +157,7 @@ class Grants extends Migration {
     $this->description = t('Import grants from a CSV');
 
     // Set up the source
-    $this->source = new MigrateSourceCSV('/Users/matth/csvs/csvs/orgs_masterlist_NTEE.csv', $this->csvcols(), array('header_rows'=>1, 'embedded_newlines'=>FALSE));
-
-    // Set up grants as the destination
-    $this->destination = new MigrateDestinationNode('grant');
+    $this->source = new MigrateSourceCSV('/Users/matth/csvs/csvs/detledger_grants_061813_Skillman_2011_IRS990.csv', $this->csvcols(), array('header_rows'=>1, 'embedded_newlines'=>FALSE));
 
     // Map fields in the source to the destination.
     // This defines the key fields for the source and the destination.
@@ -167,33 +165,38 @@ class Grants extends Migration {
     $this->map = new MigrateSQLMap($this->machineName,
       array(
         "ID" => array(
-          'type' => 'int',
+          'type' => 'varchar',
+          'length' => '128',
           'not null' => TRUE,
-          'description' => 'fake grant id',
+          'description' => 'stupid fake id',
         )
       ),
       MigrateDestinationNode::getKeySchema()
     );
 
+    // Set up grants as the destination
+    $this->destination = new MigrateDestinationNode('grant');
+
+
     // destination field is the first parameter
     // and the source field is the second parameter
     $this->addFieldMapping('title', 'ID'); // should be auto generated...
-    $this->addFieldMapping(NULL, 'Granter'); // used by prepareRow()
-    $this->addFieldMapping(NULL, 'Grantee'); // used by prepareRow()
-    $this->addFieldMapping(NULL, 'Amount'); // used by prepareRow()
-    $this->addFieldMapping(NULL, 'Year'); // used by prepareRow()
-    $this->addFieldMapping('field_source', 'Data_source');
+    $this->addFieldMapping(NULL, 'granter'); // used by prepareRow()
+    $this->addFieldMapping(NULL, 'grantee'); // used by prepareRow()
+    $this->addFieldMapping(NULL, 'amount'); // used by prepareRow()
+    $this->addFieldMapping(NULL, 'year'); // used by prepareRow()
+    $this->addFieldMapping('field_source', 'data_source');
 
 
     // $this->addFieldMapping('field_ntee', 'ntees');
         // ->arguments(array('source_type' => 'nid'));
 
-   $this->addFieldMapping('field_funder', 'Granter_id');
-   $this->addFieldMapping('field_recipient', 'Grantee_id');
-   $this->addFieldMapping('field_amount', 'Amount_clean');
-   $this->addFieldMapping('field_year', 'Year_clean');  // TODO - start and end
+   $this->addFieldMapping('field_funder', 'granter_id');
+   $this->addFieldMapping('field_recipient', 'grantee_id');
+   $this->addFieldMapping('field_amount', 'amount_clean');
+   $this->addFieldMapping('field_year', 'year_clean');  // TODO - start and end
 
-
+   print "fuuuu";
   }
 
   /**
@@ -216,13 +219,14 @@ class Grants extends Migration {
 
   // Map columns in the CSV
   protected function csvcols() {
-    $columns[0] = array('ID', 'ID');
-    $columns[1] = array('Granter', 'Granter');
-    $columns[3] = array('Grantee', 'Grantee');
-    $columns[8] = array('Amount', 'Amount');
-    $columns[9] = array('Year', 'Year');
-    $columns[10] = array('Length (Years)', 'Length');
-    $columns[11] = array('Data_source', 'Data_source');
+    $cols[0] = array('ID', 'ID');
+    $cols[1] = array('Granter', 'Granter');
+    $cols[3] = array('Grantee', 'Grantee');
+    $cols[8] = array('Amount', 'Amount');
+    $cols[9] = array('Year', 'Year');
+    $cols[10] = array('Length_years)', 'Length');
+    $cols[11] = array('Data_source', 'Data_source');
+    return $cols;
   }
 
   public function findNodeId($orgName) {
