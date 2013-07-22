@@ -56,7 +56,7 @@ class GrantTypes extends Migration {
       ),
       MigrateDestinationTerm::getKeySchema()
     );
-    $this->source = new MigrateSourceCSV('/Users/matth/csvs/csvs/classify_grants.csv', $this->csvcols(), array('header_rows'=>4,'embedded_newlines'=>FALSE));
+    $this->source = new MigrateSourceCSV('/home/bc/Desktop/codez/gnl/csvs/classify_grants.csv', $this->csvcols(), array('header_rows'=>4,'embedded_newlines'=>FALSE));
     $this->destination = new MigrateDestinationTerm('grant_types');
     $this->addFieldMapping('name', 'type');
     $this->addFieldMapping('description', 'description');
@@ -83,7 +83,7 @@ class OrgNTEETypes extends Migration {
       ),
       MigrateDestinationTerm::getKeySchema()
     );
-    $this->source = new MigrateSourceCSV('/Users/matth/csvs/csvs/classify_nonprofits_detail.csv', $this->csvcols(), array('header_rows'=>4,'embedded_newlines'=>FALSE));
+    $this->source = new MigrateSourceCSV('/home/bc/Desktop/codez/gnl/csvs/classify_nonprofits_detail.csv', $this->csvcols(), array('header_rows'=>4,'embedded_newlines'=>FALSE));
     $this->destination = new MigrateDestinationTerm('ntee');
     $this->addFieldMapping('name', 'description');
     $this->addFieldMapping('field_ntee_code', 'code');
@@ -110,7 +110,7 @@ class Orgs extends Migration {
       ),
       MigrateDestinationNode::getKeySchema()
     );
-    $this->source = new MigrateSourceCSV('/Users/matth/csvs/csvs/orgs_masterlist_NTEE.csv', $this->csvcols(), array('header_rows'=>1, 'embedded_newlines'=>FALSE));
+    $this->source = new MigrateSourceCSV('/home/bc/Desktop/codez/gnl/csvs/orgs_masterlist_NTEE.csv', $this->csvcols(), array('header_rows'=>1, 'embedded_newlines'=>FALSE));
     $this->destination = new MigrateDestinationNode('org');
     $this->addFieldMapping('title', 'ORGANIZATION_NAME');
     $this->addFieldMapping(NULL, 'ORG_NTEE'); // used by prepareRow()
@@ -157,14 +157,14 @@ class Grants extends Migration {
     $this->description = t('Import grants from a CSV');
 
     // Set up the source
-    $this->source = new MigrateSourceCSV('/Users/matth/csvs/csvs/detledger_grants_061813_Skillman_2011_IRS990.csv', $this->csvcols(), array('header_rows'=>1, 'embedded_newlines'=>FALSE));
+    $this->source = new MigrateSourceCSV('/home/bc/Desktop/codez/gnl/csvs/detledger_grants_061813_Skillman_2011_IRS990_justafew.csv', array(), array('header_rows'=>1, 'embedded_newlines'=>FALSE));
 
     // Map fields in the source to the destination.
     // This defines the key fields for the source and the destination.
     // The first parameter names the map.
     $this->map = new MigrateSQLMap($this->machineName,
       array(
-        "ID" => array(
+        "id" => array(
           'type' => 'varchar',
           'length' => '128',
           'not null' => TRUE,
@@ -180,7 +180,7 @@ class Grants extends Migration {
 
     // destination field is the first parameter
     // and the source field is the second parameter
-    $this->addFieldMapping('title', 'ID'); // should be auto generated...
+    $this->addFieldMapping('title', 'id'); // should be auto generated...
     $this->addFieldMapping(NULL, 'granter'); // used by prepareRow()
     $this->addFieldMapping(NULL, 'grantee'); // used by prepareRow()
     $this->addFieldMapping(NULL, 'amount'); // used by prepareRow()
@@ -191,74 +191,43 @@ class Grants extends Migration {
     // $this->addFieldMapping('field_ntee', 'ntees');
         // ->arguments(array('source_type' => 'nid'));
 
-   $this->addFieldMapping('field_funder', 'granter_id');
-   $this->addFieldMapping('field_recipient', 'grantee_id');
-   $this->addFieldMapping('field_amount', 'amount_clean');
-   $this->addFieldMapping('field_year', 'year_clean');  // TODO - start and end
+    $this->addFieldMapping('field_funder', 'granter_nid');
+    $this->addFieldMapping('field_recipient', 'grantee_nid');
+    $this->addFieldMapping('field_amount', 'amount_clean');
+    $this->addFieldMapping('field_year', 'years_clean'); // see prepareRow for date handling
   }
 
-  /**
-   * Fields:
-   *
-   * 0 ID
-   * 1 Granter,
-   * 2 Granter_program,
-   * 3 Grantee,
-   * 4 Grantee_city,
-   * 5 grantee_state,
-   * 6 impact_area,
-   * 7 impact_neighborhood,A
-   * 8 Amount,
-   * 9 Year,
-   * 10 Length (Years),
-   * 11 Data_source,
-   * 12 Notes
-   */
-
-  // Map columns in the CSV
-  protected function csvcols() {
-    $cols[0] = array('ID', 'ID');
-    $cols[1] = array('grantee', 'grantee');
-    $cols[3] = array('granter', 'granter');
-    $cols[8] = array('amount', 'amount');
-    $cols[9] = array('year', 'year');
-    $cols[10] = array('length_years', 'length_years');
-    $cols[11] = array('data_source', 'data_source');
-    return $cols;
-  }
-
-  public function findNodeId($orgName) {
+  public function getNidByOrgName($orgName) {
     $node = db_select('node', 'n')
               ->fields('n')
               ->condition('title', $orgName, '=')
               ->execute()
               ->fetch();
-    $nid = $node -> nid;
+    $nid = $node->nid;
     return $nid;
   }
 
   public function prepareRow($row) {
-
     // Get the start year
-    $year = $row->year;
-    $yearNum = intval($year);
+    $year_raw = $row->year;
+    $year_start = intval($year_raw);
 
     // Get the end year
-    $length = $row->length_years;
-    $lengthNum = intval($length);
-    $end = $yearNum + $lengthNum;
+    $length = intval($row->length_years);
+    $year_end = $year_start + $length;
 
-    // Set up the date range
-    $date_range = array(
-      'from' => $year,
-      'to' => $end,
+    $date_data = array(
+      //'from' => $year_start . '-01-01 00:00:00',
+      //'to' => $year_end . '-01-01 00:00:00',
+      'from' => (string) '10/30/2011 19:43',
+      'to' => (string) '12/31/2018 23:59',
     );
-    $row->year_clean = array();
-    $row->year_clean = drupal_json_encode($date_range);
+xdebug_break();
+    $row->years_clean = drupal_json_encode($date_data);
 
     // Get the organziation's IDs
-    $row->granter_id = findNodeId($row->granter);
-    $row->grantee_id = findNodeId($row->grantee);
+    $row->granter_nid = $this->getNidByOrgName($row->granter);
+    $row->grantee_nid = $this->getNidByOrgName($row->grantee);
   }
 
 
