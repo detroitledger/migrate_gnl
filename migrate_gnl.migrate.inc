@@ -217,12 +217,10 @@ class Grants extends Migration {
     $year_end = $year_start + $length;
 
     $date_data = array(
-      //'from' => $year_start . '-01-01 00:00:00',
-      //'to' => $year_end . '-01-01 00:00:00',
-      'from' => (string) '10/30/2011 19:43',
-      'to' => (string) '12/31/2018 23:59',
+      'from' => (string) '01/01/' . $year_start . ' 00:00:00',
+      'to' => (string) '01/01/' . $year_end . ' 00:00:00',
     );
-xdebug_break();
+
     $row->years_clean = drupal_json_encode($date_data);
 
     // Get the organziation's IDs
