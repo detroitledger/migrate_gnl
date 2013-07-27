@@ -186,15 +186,10 @@ class Grants extends Migration {
     $this->addFieldMapping(NULL, 'amount'); // used by prepareRow()
     $this->addFieldMapping(NULL, 'year'); // used by prepareRow()
     $this->addFieldMapping('field_source', 'data_source');
-
-
-    // $this->addFieldMapping('field_ntee', 'ntees');
-        // ->arguments(array('source_type' => 'nid'));
-
     $this->addFieldMapping('field_funder', 'granter_nid');
     $this->addFieldMapping('field_recipient', 'grantee_nid');
-    $this->addFieldMapping('field_amount', 'amount_clean');
-    $this->addFieldMapping('field_year', 'years_clean'); // see prepareRow for date handling
+    $this->addFieldMapping('field_funded_amount', 'amount_clean');
+    $this->addFieldMapping('field_year', 'years_clean');
   }
 
   public function getNidByOrgName($orgName) {
@@ -226,6 +221,8 @@ class Grants extends Migration {
     // Get the organziation's IDs
     $row->granter_nid = $this->getNidByOrgName($row->granter);
     $row->grantee_nid = $this->getNidByOrgName($row->grantee);
+
+    $row->amount_clean = (int) str_replace('$', '', str_replace(' ', '', str_replace(',', '', $row->amount)));
   }
 
 
