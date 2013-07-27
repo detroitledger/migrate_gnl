@@ -190,6 +190,8 @@ class Grants extends Migration {
     $this->addFieldMapping('field_recipient', 'grantee_nid');
     $this->addFieldMapping('field_funded_amount', 'amount_clean');
     $this->addFieldMapping('field_year', 'years_clean');
+    $this->addFieldMapping('body', 'notes');
+    $this->addFieldMapping('field_internal_notes', 'internal_notes_blob');
   }
 
   public function getNidByOrgName($orgName) {
@@ -223,6 +225,15 @@ class Grants extends Migration {
     $row->grantee_nid = $this->getNidByOrgName($row->grantee);
 
     $row->amount_clean = (int) str_replace('$', '', str_replace(' ', '', str_replace(',', '', $row->amount)));
+
+    // store extra infos as JSON in internal_notes
+    if (strlen($row->impact_area) > 1) {
+      $internal_noteses['impact_area'] = $row->impact_area;
+    }
+    if (strlen($row->impact_neighborhood) > 1) {
+      $internal_noteses['impact_neighborhood'] = $row->impact_neighborhood;
+    }
+    $row->internal_notes_blob = drupal_json_encode($internal_noteses);
   }
 
 
