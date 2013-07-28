@@ -56,7 +56,7 @@ class GrantTypes extends Migration {
       ),
       MigrateDestinationTerm::getKeySchema()
     );
-    $this->source = new MigrateSourceCSV('/home/bc/Desktop/codez/gnl/csvs/classify_grants.csv', $this->csvcols(), array('header_rows'=>4,'embedded_newlines'=>FALSE));
+    $this->source = new MigrateSourceCSV('/tmp/migrate_gnl/classify_grants.csv', $this->csvcols(), array('header_rows'=>4,'embedded_newlines'=>FALSE));
     $this->destination = new MigrateDestinationTerm('grant_types');
     $this->addFieldMapping('name', 'type');
     $this->addFieldMapping('description', 'description');
@@ -83,7 +83,7 @@ class OrgNTEETypes extends Migration {
       ),
       MigrateDestinationTerm::getKeySchema()
     );
-    $this->source = new MigrateSourceCSV('/home/bc/Desktop/codez/gnl/csvs/classify_nonprofits_detail.csv', $this->csvcols(), array('header_rows'=>4,'embedded_newlines'=>FALSE));
+    $this->source = new MigrateSourceCSV('/tmp/migrate_gnl/classify_nonprofits_detail.csv', $this->csvcols(), array('header_rows'=>4,'embedded_newlines'=>FALSE));
     $this->destination = new MigrateDestinationTerm('ntee');
     $this->addFieldMapping('name', 'description');
     $this->addFieldMapping('field_ntee_code', 'code');
@@ -110,26 +110,17 @@ class Orgs extends Migration {
       ),
       MigrateDestinationNode::getKeySchema()
     );
-    $this->source = new MigrateSourceCSV('/home/bc/Desktop/codez/gnl/csvs/orgs_masterlist_NTEE.csv', $this->csvcols(), array('header_rows'=>1, 'embedded_newlines'=>FALSE));
+    $this->source = new MigrateSourceCSV('/tmp/migrate_gnl/orgs_masterlist_NTEE.csv', array(), array('header_rows'=>1, 'embedded_newlines'=>FALSE));
     $this->destination = new MigrateDestinationNode('org');
     $this->addFieldMapping('title', 'ORGANIZATION_NAME');
     $this->addFieldMapping(NULL, 'ORG_NTEE'); // used by prepareRow()
-    //$this->addFieldMapping('field_ntee', 'ntees')
-    //     ->arguments(array('source_type' => 'tid'))
-    //     ->separator(',');
     $this->addFieldMapping('field_ntee', 'ntees');
     $this->addFieldMapping('field_ntee:source_type', 'tid')
          ->separator(',');
-
-
   }
-  protected function csvcols() {
-    $cols[1] = array('ORGANIZATION_NAME', 'org name');
-    $cols[2] = array('ORG_NTEE', 'org ntees');
-    return $cols;
-  }
+
   public function prepareRow($row) {
-    $codes = explode(';', $row->ORG_NTEE);
+    $codes = array_map('trim', explode(';', $row->ORG_NTEE));
     $tids = array();
     foreach ($codes as $code) {
       $tids[] = db_select('field_data_field_ntee_code', 'ntee')
@@ -141,6 +132,7 @@ class Orgs extends Migration {
     $tids = implode(',', $tids);
     $row->ntees = $tids;
   }
+
   public function fields() {
     return array(
       'title' => 'Organization name',
@@ -157,20 +149,20 @@ class Grants extends Migration {
     $this->description = t('Import grants from a CSV');
 
     // Set up the source
-    $this->source = new MigrateSourceCSV('/home/bc/Desktop/codez/gnl/csvs/detledger_grants_061813_Skillman_2011_IRS990_justafew.csv', array(), array('header_rows'=>1, 'embedded_newlines'=>FALSE));
+    $this->source = new MigrateSourceCSV('/tmp/migrate_gnl/allgrants.csv', array(), array('header_rows'=>1, 'embedded_newlines'=>FALSE));
 
     // Map fields in the source to the destination.
     // This defines the key fields for the source and the destination.
     // The first parameter names the map.
     $this->map = new MigrateSQLMap($this->machineName,
       array(
-        "id" => array(
-          'type' => 'varchar',
-          'length' => '128',
+        'id' => array(
+          'type' => 'int',
+          'unsigned' => TRUE,
           'not null' => TRUE,
-          'description' => 'stupid fake id',
-        )
-      ),
+          'description' => 'id',
+         ),
+       ),
       MigrateDestinationNode::getKeySchema()
     );
 
@@ -180,7 +172,7 @@ class Grants extends Migration {
 
     // destination field is the first parameter
     // and the source field is the second parameter
-    $this->addFieldMapping('title', 'id'); // should be auto generated...
+    $this->addFieldMapping('title', 'title'); // should be auto generated...
     $this->addFieldMapping(NULL, 'granter'); // used by prepareRow()
     $this->addFieldMapping(NULL, 'grantee'); // used by prepareRow()
     $this->addFieldMapping(NULL, 'amount'); // used by prepareRow()
@@ -205,6 +197,9 @@ class Grants extends Migration {
   }
 
   public function prepareRow($row) {
+    // Make a title
+    $row->title = $row->granter . ' -> ' . $row->grantee;
+
     // Get the start year
     $year_raw = $row->year;
     $year_start = intval($year_raw);
