@@ -115,8 +115,7 @@ class Orgs extends Migration {
     $this->addFieldMapping('title', 'ORGANIZATION_NAME');
     $this->addFieldMapping(NULL, 'ORG_NTEE'); // used by prepareRow()
     $this->addFieldMapping('field_ntee', 'ntees');
-    $this->addFieldMapping('field_ntee:source_type', 'tid')
-         ->separator(',');
+    $this->addFieldMapping('field_ntee:source_type')->defaultValue('tid');
   }
 
   public function prepareRow($row) {
@@ -129,7 +128,6 @@ class Orgs extends Migration {
                   ->execute()
                   ->fetchField();
     }
-    $tids = implode(',', $tids);
     $row->ntees = $tids;
   }
 
