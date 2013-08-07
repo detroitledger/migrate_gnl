@@ -31,16 +31,10 @@ function migrate_gnl_migrate_api() {
       'Orgs' => array(
         'class_name' => 'Orgs',
         'group_name' => 'nodes',
-        'dependencies' => array(
-          'OrgNTEETypes',
-        ),
       ),
       'Grants' => array(
         'class_name' => 'Grants',
         'group_name' => 'nodes',
-        'dependencies' => array(
-          'Orgs',
-        ),
       ),
     ),
   );
