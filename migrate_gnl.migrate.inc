@@ -87,11 +87,25 @@ class OrgNTEETypes extends Migration {
     $this->destination = new MigrateDestinationTerm('ntee');
     $this->addFieldMapping('name', 'description');
     $this->addFieldMapping('field_ntee_code', 'code');
+    $this->addFieldMapping('parent', 'parent_tid');
   }
   protected function csvcols() {
     $cols[0] = array('code', 'ntee code');
     $cols[1] = array('description', 'description');
     return $cols;
+  }
+  public function prepareRow($row) {
+    if (strlen($row->code) > 1) { // e.g. A1 or A5E as opp. to C
+                                  // A must come before A1, so we can look it up!
+      $letter_tid = db_select('field_data_field_ntee_code', 'ntee')
+                       ->fields('ntee', array('entity_id'))
+                       ->condition('field_ntee_code_value', $row->code[0])
+                       ->execute()
+                       ->fetchField();
+      if ($letter_tid) {
+        $row->parent_tid = $letter_tid;
+      }
+    }
   }
 }
 
