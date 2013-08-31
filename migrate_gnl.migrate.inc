@@ -189,6 +189,9 @@ class Grants extends Migration {
     $this->addFieldMapping(NULL, 'grantee'); // used by prepareRow()
     $this->addFieldMapping(NULL, 'amount'); // used by prepareRow()
     $this->addFieldMapping(NULL, 'year'); // used by prepareRow()
+    $this->addFieldMapping(NULL, 'impact_neighborhood'); // used by prepareRow()
+    $this->addFieldMapping(NULL, 'project_tags'); // used by prepareRow()
+    $this->addFieldMapping(NULL, 'granter_program'); // used by prepareRow()
     $this->addFieldMapping('field_source', 'data_source');
     $this->addFieldMapping('field_funder', 'granter_nid');
     $this->addFieldMapping('field_recipient', 'grantee_nid');
@@ -196,9 +199,12 @@ class Grants extends Migration {
     $this->addFieldMapping('field_year', 'years_clean');
     $this->addFieldMapping('body', 'notes');
     $this->addFieldMapping('field_internal_notes', 'internal_notes_blob');
+    $this->addFieldMapping('field_grant_tags', 'tags_blob');
+    $this->addFieldMapping('field_grant_tags:create_term')->defaultValue(TRUE);
+    $this->addFieldMapping('field_grant_tags:ignore_case')->defaultValue(TRUE);
   }
 
-  public function getNidByOrgName($orgName) {
+  protected function getNidByOrgName($orgName) {
     $node = db_select('node', 'n')
               ->fields('n')
               ->condition('title', $orgName, '=')
@@ -237,11 +243,44 @@ class Grants extends Migration {
     if (strlen($row->impact_area) > 1) {
       $internal_noteses['impact_area'] = $row->impact_area;
     }
-    if (strlen($row->impact_neighborhood) > 1) {
-      $internal_noteses['impact_neighborhood'] = $row->impact_neighborhood;
-    }
     $row->internal_notes_blob = drupal_json_encode($internal_noteses);
+
+    // Tags
+    $tags = array();
+
+    $granter_programs = preg_split("/[\s]*[;][\s]*/", $row->granter_program);
+    foreach ($granter_programs as $program) {
+      if (strlen($program) > 1) {
+        $tags[] = 'Granter program: ' . $program;
+      }
+    }
+
+    $impact_neighborhoods = preg_split("/[\s]*[;][\s]*/", $row->impact_neighborhood);
+    foreach ($impact_neighborhoods as $neighborhood) {
+      if (strlen($neighborhood) > 1) {
+        $tags[] = 'Impact neighborhood: ' . $neighborhood;
+      }
+    }
+
+    $projects = preg_split("/[\s]*[;][\s]*/", $row->project_tags);
+    foreach ($projects as $project) {
+      if (strlen($project) > 1) {
+        $tags[] = 'Project: ' . $project;
+      }
+    }
+    $row->tags_blob = $tags;
   }
 
-
+  /**
+   * After rollback, remove hastily-created tags.
+   */
+  public function postRollback() {
+    parent::postRollback();
+    $vocabs = taxonomy_vocabulary_get_names();
+    $grant_tags_vid = $vocabs['grant_tags']->vid;
+    $terms = db_select('taxonomy_term_data', 't')->fields('t', array('tid'))->condition('vid', $grant_tags_vid)->execute();
+    foreach ($terms as $term) {
+      taxonomy_term_delete($term->tid);
+    }
+  }
 }
