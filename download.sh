@@ -15,7 +15,7 @@ $WGET -O $DESTDIR/classify_nonprofits_detail.csv "${CLASSIFICATIONS_BASE}1"
 
 $WGET -O $DESTDIR/classify_grants.csv "${CLASSIFICATIONS_BASE}0"
 
-for SHEET in 0 1 2 3 5 6 7 9 10 12 13 14 15 17 19 20 21 22 23 24
+for SHEET in 0 1 2 3 5 6 7 9 10 12 13 14 15 17 19 20 21 22 23
 do
   URL=$GRANTS_BASE$SHEET
   $WGET -O $DESTDIR/grants$SHEET.csv "$URL"
