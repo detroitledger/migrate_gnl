@@ -128,8 +128,12 @@ class Orgs extends Migration {
     $this->destination = new MigrateDestinationNode('org');
     $this->addFieldMapping('title', 'ORGANIZATION_NAME');
     $this->addFieldMapping(NULL, 'ORG_NTEE'); // used by prepareRow()
+    $this->addFieldMapping(NULL, 'TAGS'); // used by prepareRow()
     $this->addFieldMapping('field_ntee', 'ntees');
     $this->addFieldMapping('field_ntee:source_type')->defaultValue('tid');
+    $this->addFieldMapping('field_org_tags', 'org_tags_blob');
+    $this->addFieldMapping('field_org_tags:create_term')->defaultValue(TRUE);
+    $this->addFieldMapping('field_org_tags:ignore_case')->defaultValue(TRUE);
   }
 
   public function prepareRow($row) {
@@ -143,6 +147,16 @@ class Orgs extends Migration {
                   ->fetchField();
     }
     $row->ntees = $tids;
+
+    $tags = array();
+    $org_tags = preg_split("/[\s]*[;][\s]*/", $row->TAGS);
+    foreach ($org_tags as $org_tag) {
+      if (strlen($org_tag) > 1) {
+        $tags[] = $org_tag;
+      }
+    }
+    $row->org_tags_blob = $tags;
+
   }
 
   public function fields() {
